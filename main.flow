@@ -1,0 +1,44 @@
+import simpliferRatFun;
+
+
+main() {
+    // Определение математических тождест в виде пар выражений
+    rulesArr = [
+                Pair("(x - x)", "0"),
+                Pair("(x * x)", "(x^2)"),
+                Pair("((x^2) - (y^2))", "((x - y) * (x + y))"),
+                Pair("(x + x)", "(2*x)"),
+                Pair("((y * x) + (z * x))", "((y + z) * x)"),
+                Pair("(0 * x)", "0"),
+                Pair("(x + 0)", "x"),
+                Pair("(x * 1)", "x"),
+                Pair("(-x + x)", "0"),
+                Pair("--x", "x"),
+                Pair("(x - -y)", "(x + y)"),
+                Pair("(x + -y)", "(x - y)"),
+                Pair("(x * (y * z))", "((x * y) * z)"),
+                Pair("(x + (y + z))", "((x + y) + z)"),
+                Pair("(x - (y - z))", "((x - y) - z)"),
+                Pair("(x + y)", "(y + x)"),
+                Pair("(x - y)", "(y - x)"),
+                Pair("(x * y)", "(y * x)"),
+                Pair("(x / -y)", "(-x / y)"),
+                Pair("((x / y) + (z / y))", "((x + z) / y)"),
+                Pair("(x/x)", "1")
+    ];
+    rules = buildIdentities(rulesArr);
+
+    // Определение математического выражения в виде строки
+    str = "((((x - 6) / (6 * y)) / (((x * x) - (y * y)) / y)) * (((x * x) + ((2 * (x * y)) + (y * y))) / x))";
+    expression1 = s2ar(str);
+    // Вывод оригинального выражения
+    println(str);
+    // Вывод рациональной функции
+    println(rf2s(ar2rf(expression1)));
+    expression2 = s2ar(rf2s(ar2rf(expression1)));
+    // Упроощение и вывод рациональной функции
+    expression3 = repeatedSimplify(expression2, rules, 1000);
+    println(ar2s(expression3));
+
+    quit(0)
+}

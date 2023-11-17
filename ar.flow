@@ -1,0 +1,43 @@
+import string;
+import lingo/pegcode/driver;
+
+
+export {
+    ArExpr ::= ArSum, ArDiff, ArMult, ArDiv, ArInt, ArVar, ArNeg, ArDer, ArDeg;
+    ArDer(e : ArExpr, var : string);
+    ArDeg(v : ArExpr, d : ArInt);
+    ArSum(l : ArExpr, r : ArExpr);
+    ArDiff(l : ArExpr, r : ArExpr);
+    ArMult(l : ArExpr, r : ArExpr);
+    ArDiv(l : ArExpr, r : ArExpr);
+    ArVar(var : string);
+    ArInt(val : int);
+    ArNeg(l : ArExpr);
+
+	s2ar(str : string) -> ArExpr;
+
+	ar2s(expr : ArExpr) -> string;
+}
+
+s2ar(str : string) -> ArExpr {
+    e_gr = "#include C:\area9\flow9\lab10\arith.lingo";
+    parsic(
+         compilePegGrammar(e_gr),
+         str,
+         SemanticActions(setTree(defaultPegActions.t,
+         "createArInt", \s -> ArInt(s2i(s[0])))))
+}
+
+ar2s(e : ArExpr) -> string {
+    switch(e){
+        ArDer(e1, v) : "d(" + ar2s(e1) + ")/d(" + v + ")";
+        ArDeg(v, d) : "(" + ar2s(v) + "^" + (i2s(d.val)) + ")";
+        ArSum(l, r) : "(" + ar2s(l) + " + " + ar2s(r) + ")";
+        ArDiff(l, r) : "(" + ar2s(l) + " - " + ar2s(r) + ")";
+        ArMult(l, r) : "(" + ar2s(l) + " * " + ar2s(r) + ")";
+        ArDiv(l, r) : "(" + ar2s(l) + " / " + ar2s(r) + ")";
+        ArNeg(v): "-" + ar2s(v);
+        ArInt(v): i2s(v);
+        ArVar(v): v;
+    }
+}

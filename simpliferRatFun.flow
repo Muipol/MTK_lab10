@@ -1,0 +1,155 @@
+import ratfun;
+
+export {
+    repeatedSimplify(expr : ArExpr, templates: Tree<ArExpr, ArExpr>, repeat : int) -> ArExpr;
+
+    buildIdentities(arr : [Pair<string, string>]) -> Tree<ArExpr, ArExpr>;
+
+    ratFuncSimplify(expr : ArExpr, templates : Tree<ArExpr, ArExpr>) -> ArExpr;
+}
+// Функция для создания дерева выражений из списка пар строк
+buildIdentities(arr : [Pair<string, string>]) -> Tree<ArExpr, ArExpr> {
+    foldi(arr, makeTree(), \i, acc, v -> setTree(acc, s2ar(v.first), s2ar(v.second)));
+}
+
+// Функция для повторного упрощения выражения с использованием шаблонов, кол-во повторений задается параметром
+repeatedSimplify(expr : ArExpr, templates : Tree<ArExpr, ArExpr>, repeat : int) -> ArExpr {
+    if (repeat > 0) repeatedSimplify(ratFuncSimplify(expr, templates), templates, repeat - 1)
+    else expr
+}
+
+// Функция для упрощения рациональных функций
+ratFuncSimplify(expr : ArExpr, templates : Tree<ArExpr, ArExpr>) -> ArExpr {
+    newExpr = switch(expr) {
+        ArDer(e1, v) : ArDer(ratFuncSimplify(e1, templates), v);
+
+        ArDeg(v, d) : ArDeg(ratFuncSimplify(v, templates), d);
+
+        ArSum(l, r) : ArSum(ratFuncSimplify(l, templates), ratFuncSimplify(r, templates));
+
+        ArDiff(l, r) : ArDiff(ratFuncSimplify(l, templates), ratFuncSimplify(r, templates));
+
+        ArMult(l, r) : ArMult(ratFuncSimplify(l, templates), ratFuncSimplify(r, templates));
+
+        ArDiv(l, r) : ArDiv(ratFuncSimplify(l, templates), ratFuncSimplify(r, templates));
+
+        ArNeg(v) : ArNeg(ratFuncSimplify(v, templates));
+
+        ArVar(v) : expr;
+
+        ArInt(v) : expr;
+    }
+
+    foldTree(templates, newExpr, \k, v, acc -> {
+            varTemp = findTemplate(k, acc, makeTree());
+            varTemp ?? replaceInTemplate(v, varTemp) : acc
+    });
+}
+
+// Функция для замены подвыражений по шаблону
+replaceInTemplate(expr : ArExpr, varTemp : Tree<ArVar, ArExpr>) -> ArExpr {
+    switch(expr) {
+        ArDer(e, v) : ArDer(replaceInTemplate(e, varTemp), v);
+
+        ArDeg(v, d) : ArDeg(replaceInTemplate(v, varTemp), d);
+
+        ArSum(l, r) : ArSum(replaceInTemplate(l, varTemp), replaceInTemplate(r, varTemp));
+
+        ArDiff(l, r) : ArDiff(replaceInTemplate(l, varTemp), replaceInTemplate(r, varTemp));
+
+        ArMult(l, r) : ArMult(replaceInTemplate(l, varTemp), replaceInTemplate(r, varTemp));
+
+        ArDiv(l, r) : ArDiv(replaceInTemplate(l, varTemp), replaceInTemplate(r, varTemp));
+
+        ArNeg(v) : ArNeg(replaceInTemplate(v, varTemp));
+
+        ArVar(v) : {
+            var = lookupTree(varTemp, expr);
+            var ?? var : expr
+        }
+
+        ArInt(v) : expr;
+    }
+}
+
+// Функция для поиска шаблона в дереве
+findTemplate(temp : ArExpr, expr : ArExpr, varTemp : Tree<ArVar, ArExpr>) -> Maybe<Tree<ArVar, ArExpr>> {
+    switch(temp) {
+        ArDer(e1, v1) : {
+            switch(expr) {
+                ArDer(e2, v2) : if (v1 == v2) findTemplate(e1, e2, varTemp)
+                                else None();
+                default : None();
+            }
+        }
+
+        ArDeg(v1, d1) : {
+            switch(expr) {
+                ArDeg(v2, d2) : if (d2 == d1) findTemplate(v1, v2, varTemp)
+                                else None();
+                default : None();
+            }
+        }
+
+        ArSum(l1, r1) : {
+            switch(expr) {
+                ArSum(l2, r2) : {
+                    varL = findTemplate(l1, l2, varTemp);
+                    varL ?? findTemplate(r1, r2, varL) : None()
+                }
+                default : None();
+            }
+        }
+
+        ArDiff(l1, r1) : {
+            switch(expr) {
+                ArDiff(l2, r2) : {
+                    varL = findTemplate(l1, l2, varTemp);
+                    varL ?? findTemplate(r1, r2, varL) : None()
+                }
+                default : None();
+            }
+        }
+
+        ArMult(l1, r1) : {
+            switch(expr) {
+                ArMult(l2, r2) : {
+                    varL = findTemplate(l1, l2, varTemp);
+                    varL ?? findTemplate(r1, r2, varL) : None()
+                }
+                default : None();
+            }
+        }
+
+        ArDiv(l1, r1) : {
+            switch(expr) {
+                ArDiv(l2, r2) : {
+                    varL = findTemplate(l1, l2, varTemp);
+                    varL ?? findTemplate(r1, r2, varL) : None()
+                }
+                default : None();
+            }
+        }
+
+        ArNeg(v1) : {
+            switch(expr) {
+                ArNeg(v2) : findTemplate(v1, v2, varTemp);
+                default : None();
+            }
+        }
+
+        ArVar(v1) : {
+            curVal = lookupTree(varTemp, temp);
+            curVal ?? if (curVal == expr) Some(varTemp)
+                      else None() : Some(setTree(varTemp, temp, expr))
+        }
+
+        ArInt(v1) : {
+            switch(expr) {
+                ArInt(v2) : if (v1 == v2) Some(varTemp)
+                            else None();
+                default : None();
+            }
+        }
+    }
+}

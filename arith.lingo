@@ -1,0 +1,36 @@
+S = der | deg | op | num;
+
+der = ws "d" S:e "/d(" ws varName$s ws ")" ws {ArDer(:e, $s)};
+
+deg = ws "(" S:v ws "^" ws int:d ")" ws {ArDeg(:v, :d)};
+
+
+num = int | var;
+
+int = ws digit + $s ws {ArInt(s2i($s))};
+
+var = ws varName$s ws {ArVar($s)};
+
+
+
+op = sum | diff | neg | mul | div;
+
+sum = ws "(" ws S:l ws "+" ws S:r ws ")" ws { ArSum(:l, :r)};
+
+diff = ws "(" ws S:l ws "-" ws S:r ws ")" ws { ArDiff(:l, :r)};
+
+mul = ws "(" ws S:l ws "*" ws S:r ws ")" ws { ArMult(:l, :r)};
+
+div = ws "(" ws S:l ws "/" ws S:r ws ")" ws { ArDiv(:l, :r)};
+
+neg = ws "-" ws S:v ws {ArNeg(:v)};
+
+
+
+digit = '0'-'9';
+
+ch = 'a' - 'z';
+
+ws = (' ' | '\t' | '\n' | '\r')*;
+
+varName = (ch + digit*);
